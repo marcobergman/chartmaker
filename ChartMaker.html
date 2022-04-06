@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		@media print {
+
+  div {
+    display: none;
+  }
+
+	</style>
+</head>
+<body style="margin: 0 0 0 0">
+<canvas style="border:1px solid grey;" id="my_canvas" width="300" height="300"></canvas>
+<div>
+<table>
+	<tr><td><input id="x1">
+		<td><input id="y1">
+		<td><input id="x2">
+		<td><input id="y2"></tr>
+	<tr><td><input id="lat1" placeholder="latitude" 
+		onChange="var lat = this.value; 
+			if (lat.includes(' ')) {
+				this.value = lat.split(',')[0]; 
+				document.getElementById('lon1').value = lat.split(',')[1];} ">
+		<td><input id="lon1" placeholder="longitude">
+		<td><input id="lat2" placeholder="latitude"  
+		onChange="var lat = this.value; 
+			if (lat.includes(',')) {
+				this.value = lat.split(',')[0]; 
+				document.getElementById('lon2').value = lat.split(' ')[1];} ">
+		<td><input id="lon2" placeholder="longitude"></tr>
+</table>
+<input type="button" onclick = "calculate()" value ="Calculate">
+<input id="pos">
+</div>
+<script type="text/javascript">//<![CDATA[
+
+
+var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
+var borderWidth = 30
+var mode = 0 
+var marksPerDegree = 6
+var linesPerDegree = 2
+
+var canvas = document.getElementById("my_canvas")
+var ctx = canvas.getContext("2d");
+
+var x1 = document.getElementById("x1")
+var y1 = document.getElementById("y1")
+var x2 = document.getElementById("x2")
+var y2 = document.getElementById("y2")
+var lat1 = document.getElementById("lat1")
+var lon1 = document.getElementById("lon1")
+var lat2 = document.getElementById("lat2")
+var lon2 = document.getElementById("lon2")
+var pos = document.getElementById("pos")
+
+var latFactor = 0
+var lonFactor = 0
+var latOffset = 0
+var lonOffset = 0
+
+/**
+ * image pasting into canvas
+ * 
+ * @param {string} canvas_id - canvas id
+ * @param {boolean} autoresize - if canvas will be resized
+ */
+function CLIPBOARD_CLASS(canvas_id, autoresize) {
+	var _self = this;
+
+	// handlers
+	document.addEventListener('paste', function (e) { _self.paste_auto(e); }, false);
+
+	// on paste
+	this.paste_auto = function (e) {
+		if (e.clipboardData) {
+			var items = e.clipboardData.items;
+			if (!items) return;
+			
+			//access data directly
+			var is_image = false;
+			for (var i = 0; i < items.length; i++) {
+				if (items[i].type.indexOf("image") !== -1) {
+					//image
+					var blob = items[i].getAsFile();
+					var URLObj = window.URL || window.webkitURL;
+					var source = URLObj.createObjectURL(blob);
+					this.paste_createImage(source);
+					is_image = true;
+				}
+			}
+			if(is_image == true){
+				e.preventDefault();
+			}
+		}
+	};
+	
+	// draw pasted image to canvas
+	this.paste_createImage = function (source) {
+		var pastedImage = new Image();
+		pastedImage.onload = function () {
+			if(autoresize == true){
+				//resize
+				canvas.width = pastedImage.width + 3 * borderWidth;
+				canvas.height = pastedImage.height + 2.5 * borderWidth;
+			}
+			else{
+				//clear canvas
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+			ctx.drawImage(pastedImage, 1.5 * borderWidth, borderWidth);
+			ctx.beginPath();
+			ctx.rect(1.5 * borderWidth, borderWidth, pastedImage.width, pastedImage.height);
+			ctx.stroke();
+
+		};
+		pastedImage.src = source;
+		x1.focus()
+		mode = 1
+	};
+}
+
+
+function setPos (e) {
+	X = e.clientY
+	Y = e.clientX
+	
+	if (x1 === document.activeElement || y1 === document.activeElement ) {
+		x1.value = X
+		y1.value = Y
+	}
+	if (x2 === document.activeElement || y2 === document.activeElement ) {
+		x2.value = X
+		y2.value = Y
+	}
+	if (mode == 4) {
+		lat = (latOffset + latFactor * X).toFixed(4)
+		lon = (lonOffset + lonFactor * Y).toFixed(4)
+		pos.value = lat + " / " + lon
+	}
+}
+
+
+
+function setFocus (e) {
+	if ( mode == 1 ) {
+		x2.focus();
+		mode = 2
+		return
+	}
+	if (mode == 2 ) {
+		lat1.focus()
+	}
+}
+
+
+
+function drawLatLon(latlon, x, y, latOrLon) {
+	if (latOrLon == 'LAT') 
+		letter = latlon > 0 ? "N" : "S"
+	else
+		letter = latlon > 0 ? "E" : "W"
+	degrees = Math.abs(Math.trunc(latlon))
+	minutes = 60*(Math.abs(latlon) - degrees)
+	ctx.font = "10px Georgia";
+	if ((x > 25 || latOrLon == 'LAT') 
+		&& (x < canvas.width - 1.5 * borderWidth || latOrLon == 'LAT')
+		&& (y > borderWidth || latOrLon == 'LON')
+		&& (y < canvas.height - borderWidth || latOrLon == 'LON')) {
+		ctx.fillText (degrees.toFixed(0) + " ° " + letter, x-10, y)
+		ctx.fillText (minutes.toFixed(0) + "'", x-5, y+10)
+	}
+}
+
+
+
+function calculate () {
+	X1 = x1.value
+	X2 = x2.value
+	Y1 = y1.value
+	Y2 = y2.value
+	Lat1 = lat1.value
+	Lat2 = lat2.value
+	Lon1 = lon1.value
+	Lon2 = lon2.value
+	
+	dX = X2 - X1
+	dY = Y2 - Y1
+	dLat = Lat2 - Lat1
+	dLon = Lon2 - Lon1
+	latFactor = dLat / dX
+	lonFactor = dLon / dY
+	latOffset = Lat1 - X1 * latFactor
+	lonOffset = Lon1 - Y1 * lonFactor
+	latMax = latOffset + latFactor * (canvas.height - borderWidth)
+	lonMax = lonOffset + lonFactor * (canvas.width - borderWidth)
+	
+	latDegrees = Math.abs(latMax - latOffset)
+	lonDegrees = Math.abs(lonMax - lonOffset)
+	console.log("latDegrees", latDegrees, "lonDegrees", lonDegrees)
+	
+	linesPerDegree = 2
+	
+	if (latDegrees < 1 || lonDegrees < 1 ) {
+		linesPerDegree = 6
+	}
+	if (latDegrees > 2  || lonDegrees > 2) {
+		linesPerDegree = 1
+	}
+	
+	mode = 4
+	
+	// Print Edges
+	for (let lon = Math.round(lonOffset * marksPerDegree) / marksPerDegree; lon < lonMax; lon += 1/marksPerDegree) {
+		x = ( lon - lonOffset ) / lonFactor
+		drawLatLon(lon, x, 12, 'LON')
+		drawLatLon(lon, x, canvas.height - 15 - 0.5 * borderWidth, 'LON')
+		if (Math.abs(lon - Math.trunc(lon*linesPerDegree) / linesPerDegree) < 0.01 && x > borderWidth && x < canvas.width - 2 * borderWidth){
+			ctx.beginPath();
+			ctx.moveTo(x, borderWidth);
+			ctx.lineTo(x, canvas.height - 1.5 * borderWidth);
+			ctx.stroke();
+		}
+	}
+	
+	for (let lat = Math.round(latOffset * marksPerDegree) / marksPerDegree; lat > latMax ; lat -= 1/marksPerDegree) {
+		y = ( lat - latOffset ) / latFactor
+		drawLatLon(lat, 15, y, 'LAT')
+		drawLatLon(lat, canvas.width - 18 - 0.5 * borderWidth, y, 'LAT')
+		if (Math.abs(lat - Math.trunc(lat * linesPerDegree) / linesPerDegree) < 0.01 && y > borderWidth && y < canvas.height - borderWidth){
+			ctx.beginPath();
+			ctx.moveTo(1.5 * borderWidth, y);
+			ctx.lineTo(canvas.width - 1.5 * borderWidth, y);
+			ctx.stroke();
+		}
+
+	}
+	
+	// Legend bars
+	barWidth = 5
+	
+	// Vertical 
+	pixelsPerMile = Math.abs( 1 / latFactor / 60 )
+	barOriginX =  canvas.width - 5
+	barOriginY = (Math.trunc(latOffset * marksPerDegree) / marksPerDegree - latOffset )/latFactor
+
+	miles = 10 * Math.trunc( (canvas.height - barWidth - barOriginY) / pixelsPerMile / 10)
+
+	for (let n = 0; n < miles; n++) {
+		ctx.beginPath();
+		ctx.rect(barOriginX, barOriginY + n * pixelsPerMile, barWidth, pixelsPerMile);
+		ctx.stroke();
+	}
+	for (let n = 0; n < miles; n+= 10) {
+		ctx.beginPath();
+		ctx.rect(barOriginX - barWidth, barOriginY + n * pixelsPerMile, barWidth, 10 * pixelsPerMile);
+		ctx.stroke();
+	}
+	
+	// Horizontal 
+	pixelsPerMile = Math.abs( 1 / lonFactor / 60 )
+	barOriginX = (Math.trunc(lonOffset * marksPerDegree) / marksPerDegree - lonOffset )/lonFactor
+	barOriginY =  canvas.height - 5
+
+	miles = Math.abs(10 * Math.trunc( (canvas.width - barWidth - barOriginX) / pixelsPerMile / 10))
+
+	for (let n = 0; n < miles; n++) {
+		ctx.beginPath();
+		ctx.rect(barOriginX + n * pixelsPerMile, barOriginY, pixelsPerMile, barWidth);
+		ctx.stroke();
+	}
+	for (let n = 0; n < miles; n+= 10) {
+		ctx.beginPath();
+		ctx.rect(barOriginX + n * pixelsPerMile, barOriginY - barWidth, 10 * pixelsPerMile, barWidth);
+		ctx.stroke();
+	}
+}
+
+
+lat1.focus(); mode = 3
+
+canvas.addEventListener('mousemove', function (e) {setPos(e) }, true);
+canvas.addEventListener('click', function (e) {setFocus(e) }, true);
+
+
+  //]]></script>
+
+</body>
+</html>
