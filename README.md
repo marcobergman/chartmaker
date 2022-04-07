@@ -14,3 +14,4 @@ Tool that formats an image as a paper nautical chart that can be used for tradit
 
 ## Note
 - In the lat fields, a composite, comma-separated latlong can be pasted (e.g. "60.5, 2.3" from right-clicking a location in Google maps). The lon is transferred automatically to the next field.
+- Instruction video at https://youtu.be/OlHVGIqKEJ8
