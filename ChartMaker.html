@@ -57,16 +57,16 @@ var lat2 = document.getElementById("lat2")
 var lon2 = document.getElementById("lon2")
 var pos = document.getElementById("pos")
 
-//x1.value = '73'
-//y1.value = '261'
-//x2.value = '400'
-//y2.value = '646'
-//lat1.value = '58.59885328138695'
-//lon1.value = '-4.01859489313778'
-//lat2.value = '57.610230440664076'
-//lon2.value = '-1.8165823722012504'
-//canvas.width = '829'
-//canvas.height = '566'
+x1.value = '73'
+y1.value = '261'
+x2.value = '400'
+y2.value = '646'
+lat1.value = '58.59885328138695'
+lon1.value = '-4.01859489313778'
+lat2.value = '57.610230440664076'
+lon2.value = '-1.8165823722012504'
+canvas.width = '829'
+canvas.height = '566'
 
 var latFactor = 0
 var lonFactor = 0
@@ -170,13 +170,17 @@ function setFocus (e) {
 
 
 function drawLatLon(latlon, x, y, latOrLon) {
+	latlon = Math.round(latlon*1000)/1000
+	degrees = Math.trunc(Math.abs(latlon))
+	minutes = 60*(Math.abs(latlon) - degrees)
+	
 	if (latOrLon == 'LAT') 
 		letter = latlon > 0 ? "N" : "S"
 	else
 		letter = latlon > 0 ? "E" : "W"
-	degrees = Math.abs(Math.trunc(latlon))
-	minutes = 60*(Math.abs(latlon) - degrees)
+		
 	ctx.font = "10px Georgia";
+	
 	if ((x > 25 || latOrLon == 'LAT') 
 		&& (x < canvas.width - 1.5 * borderWidth || latOrLon == 'LAT')
 		&& (y > borderWidth || latOrLon == 'LON')
@@ -221,7 +225,7 @@ function calculate () {
 	latOffset = Lat1 - X1 * latFactor
 	lonOffset = Lon1 - Y1 * lonFactor
 	latMax = latOffset + latFactor * (canvas.height - borderWidth)
-	lonMax = lonOffset + lonFactor * (canvas.width - borderWidth)
+	lonMax = lonOffset + lonFactor * (canvas.width - 2 * borderWidth)
 	
 	latDegrees = Math.abs(latMax - latOffset)
 	lonDegrees = Math.abs(lonMax - lonOffset)
@@ -245,7 +249,8 @@ function calculate () {
 		x = ( lon - lonOffset ) / lonFactor
 		drawLatLon(lon, x, 12, 'LON')
 		drawLatLon(lon, x, canvas.height - 15 - 0.5 * borderWidth, 'LON')
-		if (Math.abs(lon - Math.trunc(lon*linesPerDegree) / linesPerDegree) < 0.01 && x > borderWidth && x < canvas.width - 2 * borderWidth){
+		// draw vertical lines
+		if (Math.abs(lon - Math.round(lon*linesPerDegree) / linesPerDegree) < 0.01 && x > borderWidth && x < canvas.width - 2 * borderWidth){
 			ctx.beginPath();
 			ctx.moveTo(x, borderWidth);
 			ctx.lineTo(x, canvas.height - 1.5 * borderWidth);
@@ -257,7 +262,8 @@ function calculate () {
 		y = ( lat - latOffset ) / latFactor
 		drawLatLon(lat, 15, y, 'LAT')
 		drawLatLon(lat, canvas.width - 18 - 0.5 * borderWidth, y, 'LAT')
-		if (Math.abs(lat - Math.trunc(lat * linesPerDegree) / linesPerDegree) < 0.01 && y > borderWidth && y < canvas.height - borderWidth){
+		// draw horizontal lines
+		if (Math.abs(lat - Math.round(lat * linesPerDegree) / linesPerDegree) < 0.01 && y > borderWidth && y < canvas.height - borderWidth){
 			ctx.beginPath();
 			ctx.moveTo(1.5 * borderWidth, y);
 			ctx.lineTo(canvas.width - 1.5 * borderWidth, y);
@@ -274,7 +280,7 @@ function calculate () {
 	barOriginX =  canvas.width - 5
 	barOriginY = (Math.trunc(latOffset * marksPerDegree) / marksPerDegree - latOffset )/latFactor
 
-	miles = 10 * Math.trunc( (canvas.height - barWidth - barOriginY) / pixelsPerMile / 10)
+	miles = 10 * Math.round( (canvas.height - barWidth - barOriginY) / pixelsPerMile / 10)
 
 	for (let n = 0; n < miles; n++) {
 		ctx.beginPath();
@@ -289,10 +295,10 @@ function calculate () {
 	
 	// Horizontal 
 	pixelsPerMile = Math.abs( 1 / lonFactor / 60 )
-	barOriginX = (Math.trunc(lonOffset * marksPerDegree) / marksPerDegree - lonOffset )/lonFactor
+	barOriginX = (Math.round(lonOffset * marksPerDegree) / marksPerDegree - lonOffset )/lonFactor
 	barOriginY =  canvas.height - 5
 
-	miles = Math.abs(10 * Math.trunc( (canvas.width - barWidth - barOriginX) / pixelsPerMile / 10))
+	miles = Math.abs(10 * Math.trunc( (canvas.width - 2 * barWidth - barOriginX) / pixelsPerMile / 10))
 
 	for (let n = 0; n < miles; n++) {
 		ctx.beginPath();
