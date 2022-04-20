@@ -57,6 +57,17 @@ var lat2 = document.getElementById("lat2")
 var lon2 = document.getElementById("lon2")
 var pos = document.getElementById("pos")
 
+//x1.value = '73'
+//y1.value = '261'
+//x2.value = '400'
+//y2.value = '646'
+//lat1.value = '58.59885328138695'
+//lon1.value = '-4.01859489313778'
+//lat2.value = '57.610230440664076'
+//lon2.value = '-1.8165823722012504'
+//canvas.width = '829'
+//canvas.height = '566'
+
 var latFactor = 0
 var lonFactor = 0
 var latOffset = 0
@@ -175,7 +186,21 @@ function drawLatLon(latlon, x, y, latOrLon) {
 	}
 }
 
+function printParameters() {
 
+	t = "x1.value = '" + x1.value + "'\n"
+	t += "y1.value = '" + y1.value + "'\n"
+	t += "x2.value = '" + x2.value + "'\n"
+	t += "y2.value = '" + y2.value + "'\n"
+	t += "lat1.value = '" + lat1.value + "'\n"
+	t += "lon1.value = '" + lon1.value + "'\n"
+	t += "lat2.value = '" + lat2.value + "'\n"
+	t += "lon2.value = '" + lon2.value + "'\n"
+	t += "canvas.width = '" + canvas.width + "'\n"
+	t += "canvas.height = '" + canvas.height + "'\n"
+	
+	console.log(t)
+}
 
 function calculate () {
 	X1 = x1.value
@@ -200,7 +225,6 @@ function calculate () {
 	
 	latDegrees = Math.abs(latMax - latOffset)
 	lonDegrees = Math.abs(lonMax - lonOffset)
-	console.log("latDegrees", latDegrees, "lonDegrees", lonDegrees)
 	
 	linesPerDegree = 2
 	
@@ -211,6 +235,9 @@ function calculate () {
 		linesPerDegree = 1
 	}
 	
+	console.log("latDegrees", latDegrees, "lonDegrees", lonDegrees, "linesPerDegree", linesPerDegree)
+	printParameters()
+
 	mode = 4
 	
 	// Print Edges
